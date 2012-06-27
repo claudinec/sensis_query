@@ -29,10 +29,25 @@ function sensis_query_admin() {
  */
 function sensis_query_menu() {
   $items = array();
+
+  $items['admin/settings/sensis_query'] = array(
+    'title' => 'Sensis query settings',
+    'description' => 'Sensis query settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sensis_query_admin'),
+    'access arguments' => array('administer sensis_query settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   $items['sensis_query'] = array(
     'title' => 'Sensis query form',
     'description' => 'Sensis query form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sensis_query_form_build'),
+    'access arguments' => array('access sensis_query'),
+    'type' => MENU_NORMAL_ITEM,
   );
+
   return $items;
 }
 
@@ -64,7 +79,7 @@ function sensis_query_form_build($form, &$form_state) {
     '#value' => t('Submit'),
   );
 
-  return form;
+  return $form;
 }
 
 function sensis_query_form_validate($form, &$form_state) {
