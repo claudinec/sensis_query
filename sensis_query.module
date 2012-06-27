@@ -14,57 +14,57 @@
  * Module configuration.
  */
 function sensis_query_admin() {
-	$form = array();
-	$form['sensis_query_apikey'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Sensis Developer API Key',
-		'#default_value' => variable_get('sensis_query_apikey');
-		'#required' => TRUE,
-	);
-	return system_settings_form($form);
+  $form = array();
+  $form['sensis_query_apikey'] = array(
+  	'#type' => 'textfield',
+  	'#title' => 'Sensis Developer API Key',
+  	'#default_value' => variable_get('sensis_query_apikey');
+  	'#required' => TRUE,
+  );
+  return system_settings_form($form);
 }
 
 /**
  * Implementation of menu.
  */
 function sensis_query_menu() {
-	$items = array();
-	$items['sensis_query'] = array(
-		'title' => t('Sensis query form'),
-		'description' => t('Sensis query form'),
-	);
-	return items;
+  $items = array();
+  $items['sensis_query'] = array(
+  	'title' => t('Sensis query form'),
+  	'description' => t('Sensis query form'),
+  );
+  return items;
 }
 
 /**
  * Implementation of form.
  */
 function sensis_query_form() {
-	return drupal_get_form('sensis_query_form_build');
+  return drupal_get_form('sensis_query_form_build');
 }
 
 /**
  * Build a form to construct a search query.
  */
 function sensis_query_form_build($form, &$form_state) {
-	$form['query'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Search query',
-		'#required' => TRUE,
-	);
+  $form['query'] = array(
+  	'#type' => 'textfield',
+  	'#title' => 'Search query',
+  	'#required' => TRUE,
+  );
 
-	$form['location'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Location',
-		'#required' => TRUE,
-	);
+  $form['location'] = array(
+  	'#type' => 'textfield',
+  	'#title' => 'Location',
+  	'#required' => TRUE,
+  );
 
-	$form['submit'] = array(
-		'#type' => 'submit',
-		'#value' => t('Submit'),
-	);
+  $form['submit'] = array(
+  	'#type' => 'submit',
+  	'#value' => t('Submit'),
+  );
 
-	return form;
+  return form;
 }
 
 function sensis_query_form_validate($form, &$form_state) {
@@ -86,50 +86,50 @@ function sensis_query_form_validate($form, &$form_state) {
  *   Results from Sensis in JSON format.
  */
 function sensis_query_form_submit($apikey, $form, &$form_state) {
-	$apikey = variable_get('sensis_query_apikey');
-	$query = $form_state['values']['query'];
-	$location = $form_state['values']['location'];
-	
-	# URL of the Sensis Search API endpoint.
-	$endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
+  $apikey = variable_get('sensis_query_apikey');
+  $query = $form_state['values']['query'];
+  $location = $form_state['values']['location'];
+  
+  # URL of the Sensis Search API endpoint.
+  $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
-	# Construct a URL with the query string, escaping any special characters.
-	$query_url = $endpoint . "?key=" . $apikey . 
-    	    "&query=" . urlencode($query) . 
-        	"&location=" . urlencode($location);
+  # Construct a URL with the query string, escaping any special characters.
+  $query_url = $endpoint . "?key=" . $apikey . 
+      "&query=" . urlencode($query) . 
+      "&location=" . urlencode($location);
 
-    # Create HttpRequest class for calling endpoint.
-	$request = new HttpRequest($url, HttpRequest::METH_GET);
+  # Create HttpRequest class for calling endpoint.
+  $request = new HttpRequest($url, HttpRequest::METH_GET);
  
-	# Call the endpoint, returning the HTTP response.
-	$response = $request->send();
+  # Call the endpoint, returning the HTTP response.
+  $response = $request->send();
 
-	# Check HTTP response code.
-	if ($response->getResponseCode() != 200) {
-		drupal_set_message("Sensis server returned error: HTTP " . $request->getResponseCode(), 'error');
-	}
+  # Check HTTP response code.
+  if ($response->getResponseCode() != 200) {
+  	drupal_set_message("Sensis server returned error: HTTP " . $request->getResponseCode(), 'error');
+  }
 
-	# Check API response.
-	$result = json_decode($response->getBody(), true);
+  # Check API response.
+  $result = json_decode($response->getBody(), true);
  
-	# grab the response code
-	$code = $result["code"];
+  # grab the response code
+  $code = $result["code"];
 
-	# ensure successful status code
-	if ($code != 200 && $code != 206) {
-    	drupal_set_message("API returned error: " . 
-            $result["message"] . ", code: " . $result["code"]);
-	}
+  # ensure successful status code
+  if ($code != 200 && $code != 206) {
+    drupal_set_message("API returned error: " . 
+      $result["message"] . ", code: " . $result["code"]);
+  }
 
-	# Print total results found.
-	echo "Total results found: " . $result["totalResults"] . "\n";
+  # Print total results found.
+  echo "Total results found: " . $result["totalResults"] . "\n";
 
-	# Render results on a map.
-	# We'll want business name and address, latitude, and longitude.
+  # Render results on a map.
+  # We'll want business name and address, latitude, and longitude.
 
-	# Render results in a list: Just business name and address.
+  # Render results in a list: Just business name and address.
 
-	foreach ($result["results"] as &$listing) {
-    	echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
-	}
+  foreach ($result["results"] as &$listing) {
+    echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
+  }
 }
