@@ -16,10 +16,10 @@
 function sensis_query_admin() {
   $form = array();
   $form['sensis_query_apikey'] = array(
-  	'#type' => 'textfield',
-  	'#title' => 'Sensis Developer API Key',
-  	'#default_value' => variable_get('sensis_query_apikey');
-  	'#required' => TRUE,
+    '#type' => 'textfield',
+    '#title' => 'Sensis Developer API Key',
+    '#default_value' => variable_get('sensis_query_apikey'),
+    '#required' => TRUE,
   );
   return system_settings_form($form);
 }
@@ -30,10 +30,10 @@ function sensis_query_admin() {
 function sensis_query_menu() {
   $items = array();
   $items['sensis_query'] = array(
-  	'title' => t('Sensis query form'),
-  	'description' => t('Sensis query form'),
+    'title' => 'Sensis query form',
+    'description' => 'Sensis query form',
   );
-  return items;
+  return $items;
 }
 
 /**
@@ -48,20 +48,20 @@ function sensis_query_form() {
  */
 function sensis_query_form_build($form, &$form_state) {
   $form['query'] = array(
-  	'#type' => 'textfield',
-  	'#title' => 'Search query',
-  	'#required' => TRUE,
+    '#type' => 'textfield',
+    '#title' => 'Search query',
+    '#required' => TRUE,
   );
 
   $form['location'] = array(
-  	'#type' => 'textfield',
-  	'#title' => 'Location',
-  	'#required' => TRUE,
+    '#type' => 'textfield',
+    '#title' => 'Location',
+    '#required' => TRUE,
   );
 
   $form['submit'] = array(
-  	'#type' => 'submit',
-  	'#value' => t('Submit'),
+    '#type' => 'submit',
+    '#value' => t('Submit'),
   );
 
   return form;
@@ -90,38 +90,34 @@ function sensis_query_form_submit($apikey, $form, &$form_state) {
   $query = $form_state['values']['query'];
   $location = $form_state['values']['location'];
   
-  # URL of the Sensis Search API endpoint.
+  # URL of the Sensis Search API endpoint
   $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
-  # Construct a URL with the query string, escaping any special characters.
+  # Construct a URL with the query string, escaping any special characters
   $query_url = $endpoint . "?key=" . $apikey . 
       "&query=" . urlencode($query) . 
       "&location=" . urlencode($location);
 
-  # Create HttpRequest class for calling endpoint.
+  # Create HttpRequest class for calling endpoint
   $request = new HttpRequest($url, HttpRequest::METH_GET);
  
-  # Call the endpoint, returning the HTTP response.
+  # Call the endpoint, returning the HTTP response
   $response = $request->send();
 
-  # Check HTTP response code.
-  if ($response->getResponseCode() != 200) {
-  	drupal_set_message("Sensis server returned error: HTTP " . $request->getResponseCode(), 'error');
+  # Check HTTP response code
+  $responsecode = $response->getResponseCode();
+  if ($responsecode != 200) {
+    drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
   }
 
-  # Check API response.
-  $result = json_decode($response->getBody(), true);
- 
-  # grab the response code
+  # Check API response
+  $result = json_decode($response->getBody(), TRUE);
   $code = $result["code"];
-
-  # ensure successful status code
   if ($code != 200 && $code != 206) {
-    drupal_set_message("API returned error: " . 
-      $result["message"] . ", code: " . $result["code"]);
+    drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
   }
 
-  # Print total results found.
+  # Print total results found
   echo "Total results found: " . $result["totalResults"] . "\n";
 
   # Render results on a map.
