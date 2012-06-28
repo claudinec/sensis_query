@@ -82,9 +82,6 @@ function sensis_query_form_build($form, &$form_state) {
   return $form;
 }
 
-function sensis_query_form_validate($form, &$form_state) {
-}
-
 /**
  * Send the query to Sensis.
  *
@@ -100,7 +97,7 @@ function sensis_query_form_validate($form, &$form_state) {
  * @return
  *   Results from Sensis in JSON format.
  */
-function sensis_query_form_submit($apikey, $form, &$form_state) {
+function sensis_query_form_submit($form, &$form_state) {
   $apikey = variable_get('sensis_query_apikey');
   $query = $form_state['values']['query'];
   $location = $form_state['values']['location'];
@@ -119,28 +116,54 @@ function sensis_query_form_submit($apikey, $form, &$form_state) {
   # Call the endpoint, returning the HTTP response
   $response = $request->send();
 
-  # Check HTTP response code
-  $responsecode = $response->getResponseCode();
-  if ($responsecode != 200) {
-    drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
-  }
+  # Set sensis_query_response for use by sensis_query_page_alter.
+  variable_set('sensis_query_response', $response);
+}
 
-  # Check API response
-  $result = json_decode($response->getBody(), TRUE);
-  $code = $result["code"];
-  if ($code != 200 && $code != 206) {
-    drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
-  }
+/**
+ * Implementation of page alter.
+ *
+ * @param $response
+ *   Response from Sensis query.
+ */
+function sensis_query_page_alter(&$page) {
+  $response = variable_get('sensis_query_response');
 
-  # Print total results found
-  echo "Total results found: " . $result["totalResults"] . "\n";
+  if ($response != NULL) {
+    # Check HTTP response code
+    $responsecode = $response->getResponseCode();
+    if ($responsecode != 200) {
+      drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
+    }
+    else {
+      $page['content']['sensis_query_response'] = array(
+        '#weight' => 0,
+        '#markup' => t('Response OK'),
+      );
+    }
 
-  # Render results on a map.
-  # We'll want business name and address, latitude, and longitude.
+    # Check API response; if OK, display results
+    $result = json_decode($response->getBody(), TRUE);
+    $code = $result["code"];
+    if ($code != 200 && $code != 206) {
+      drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
+    }
+    else {
+      # Print total results found
+      $page['content']['sensis_query_results'] = array(
+        '#weight' => 0,
+        '#markup' => t('Total results found: ' . $result['totalResults']),
+      );
 
-  # Render results in a list: Just business name and address.
+      # Render results on a map.
+      # We'll want business name and address, latitude, and longitude.
 
-  foreach ($result["results"] as &$listing) {
-    echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
+      # Render results in a list: Just business name and address.
+
+      # foreach ($result["results"] as &$listing) {
+        # echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
+      # }
+    }
   }
 }
+
