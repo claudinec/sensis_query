@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Query the Sensis API from within a Drupal node.
@@ -14,60 +13,72 @@
  * Module configuration.
  */
 function sensis_query_admin() {
-	$form = array();
-	$form['sensis_query_apikey'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Sensis Developer API Key',
-		'#default_value' => variable_get('sensis_query_apikey');
-		'#required' => TRUE,
-	);
-	return system_settings_form($form);
+  $form = array();
+  $form['sensis_query_apikey'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Sensis Developer API Key',
+    '#default_value' => variable_get('sensis_query_apikey'),
+    '#required' => TRUE,
+  );
+  return system_settings_form($form);
 }
 
 /**
  * Implementation of menu.
  */
 function sensis_query_menu() {
-	$items = array();
-	$items['sensis_query'] = array(
-		'title' => t('Sensis query form'),
-		'description' => t('Sensis query form'),
-	);
-	return items;
+  $items = array();
+
+  $items['admin/settings/sensis_query'] = array(
+    'title' => 'Sensis query settings',
+    'description' => 'Sensis query settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sensis_query_admin'),
+    'access arguments' => array('administer sensis_query settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['sensis_query'] = array(
+    'title' => 'Sensis query form',
+    'description' => 'Sensis query form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sensis_query_form_build'),
+    'access arguments' => array('access sensis_query'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
 }
 
 /**
  * Implementation of form.
  */
 function sensis_query_form() {
-	return drupal_get_form('sensis_query_form_build');
+  return drupal_get_form('sensis_query_form_build');
 }
 
 /**
  * Build a form to construct a search query.
  */
 function sensis_query_form_build($form, &$form_state) {
-	$form['query'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Search query',
-		'#required' => TRUE,
-	);
+  $form['query'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Search query',
+    '#required' => TRUE,
+  );
 
-	$form['location'] = array(
-		'#type' => 'textfield',
-		'#title' => 'Location',
-		'#required' => TRUE,
-	);
+  $form['location'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Location',
+    '#required' => TRUE,
+  );
 
-	$form['submit'] = array(
-		'#type' => 'submit',
-		'#value' => t('Submit'),
-	);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
 
-	return form;
-}
-
-function sensis_query_form_validate($form, &$form_state) {
+  return $form;
 }
 
 /**
@@ -75,61 +86,81 @@ function sensis_query_form_validate($form, &$form_state) {
  *
  * @param $apikey
  *   Your Sensis Developer API key, entered in sensis_query_admin().
- *
  * @param $query
  *   What to search for (eg business type or name)
- *
  * @param $location
  *   Location as text: suburb/locality or state/territory.
  *
  * @return
  *   Results from Sensis in JSON format.
  */
-function sensis_query_form_submit($apikey, $form, &$form_state) {
-	$apikey = variable_get('sensis_query_apikey');
-	$query = $form_state['values']['query'];
-	$location = $form_state['values']['location'];
-	
-	# URL of the Sensis Search API endpoint.
-	$endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
+function sensis_query_form_submit($form, &$form_state) {
+  $apikey = variable_get('sensis_query_apikey');
+  $query = $form_state['values']['query'];
+  $location = $form_state['values']['location'];
+  
+  // URL of the Sensis Search API endpoint
+  $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
-	# Construct a URL with the query string, escaping any special characters.
-	$query_url = $endpoint . "?key=" . $apikey . 
-    	    "&query=" . urlencode($query) . 
-        	"&location=" . urlencode($location);
+  // Construct a URL with the query string, escaping any special characters
+  $query_url = $endpoint . "?key=" . $apikey . 
+      "&query=" . urlencode($query) . 
+      "&location=" . urlencode($location);
 
-    # Create HttpRequest class for calling endpoint.
-	$request = new HttpRequest($url, HttpRequest::METH_GET);
+  // Create HttpRequest class for calling endpoint
+  $request = new HttpRequest($url, HttpRequest::METH_GET);
  
-	# Call the endpoint, returning the HTTP response.
-	$response = $request->send();
+  // Call the endpoint, returning the HTTP response
+  $response = $request->send();
 
-	# Check HTTP response code.
-	if ($response->getResponseCode() != 200) {
-		drupal_set_message("Sensis server returned error: HTTP " . $request->getResponseCode(), 'error');
-	}
-
-	# Check API response.
-	$result = json_decode($response->getBody(), true);
- 
-	# grab the response code
-	$code = $result["code"];
-
-	# ensure successful status code
-	if ($code != 200 && $code != 206) {
-    	drupal_set_message("API returned error: " . 
-            $result["message"] . ", code: " . $result["code"]);
-	}
-
-	# Print total results found.
-	echo "Total results found: " . $result["totalResults"] . "\n";
-
-	# Render results on a map.
-	# We'll want business name and address, latitude, and longitude.
-
-	# Render results in a list: Just business name and address.
-
-	foreach ($result["results"] as &$listing) {
-    	echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
-	}
+  // Set sensis_query_response for use by sensis_query_page_alter.
+  variable_set('sensis_query_response', $response);
 }
+
+/**
+ * Implementation of page alter.
+ *
+ * @param $response
+ *   Response from Sensis query.
+ */
+function sensis_query_page_alter(&$page) {
+  $response = variable_get('sensis_query_response');
+
+  if ($response != NULL) {
+    // Check HTTP response code
+    $responsecode = $response->getResponseCode();
+    if ($responsecode != 200) {
+      drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
+    }
+    else {
+      $page['content']['sensis_query_response'] = array(
+        '#weight' => 0,
+        '#markup' => t('Response OK'),
+      );
+    }
+
+    // Check API response; if OK, display results
+    $result = json_decode($response->getBody(), TRUE);
+    $code = $result["code"];
+    if ($code != 200 && $code != 206) {
+      drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
+    }
+    else {
+      // Print total results found
+      $page['content']['sensis_query_results'] = array(
+        '#weight' => 0,
+        '#markup' => t('Total results found: ' . $result['totalResults']),
+      );
+
+      // Render results on a map.
+      // We'll want business name and address, latitude, and longitude.
+
+      // Render results in a list: Just business name and address.
+
+      // foreach ($result["results"] as &$listing) {
+        // echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
+      // }
+    }
+  }
+}
+
