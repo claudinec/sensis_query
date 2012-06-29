@@ -29,7 +29,7 @@ function sensis_query_admin() {
 function sensis_query_menu() {
   $items = array();
 
-  $items['admin/settings/sensis_query'] = array(
+  $items['admin/config/sensis_query'] = array(
     'title' => 'Sensis query settings',
     'description' => 'Sensis query settings',
     'page callback' => 'drupal_get_form',
@@ -48,6 +48,18 @@ function sensis_query_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function sensis_query_permission() {
+  return array(
+    'access sensis_query' => array(
+      'title' => t('Access the Sensis Query form')),
+    'administer sensis_query settings' => array(
+      'title' => t('Administer Sensis Query settings'))
+  );
 }
 
 /**
@@ -70,12 +82,14 @@ function sensis_query_form_build($form, &$form_state) {
   $form['location'] = array(
     '#type' => 'textfield',
     '#title' => 'Location',
+    '#description' => 'Suburb or locality, postcode, latitude and longitude, or state or territory',
     '#required' => TRUE,
   );
 
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
+    '#submit' => array('sensis_query_form_submit'),
   );
 
   return $form;
@@ -107,14 +121,25 @@ function sensis_query_form_submit($form, &$form_state) {
       "&query=" . urlencode($query) . 
       "&location=" . urlencode($location);
 
-  // Create HttpRequest class for calling endpoint
-  $request = new HttpRequest($url, HttpRequest::METH_GET);
- 
-  // Call the endpoint, returning the HTTP response
-  $response = $request->send();
+  // Call the endpoint
+  $response = file_get_contents($query_url);
 
-  // Set sensis_query_response for use by sensis_query_page_alter.
-  variable_set('sensis_query_response', $response);
+  // Check HTTP response code
+  if (!$response) {
+    drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
+  }
+
+  // Check API response
+  $result = json_decode($response, TRUE);
+  $code = $result["code"];
+  if ($code != 200 && $code != 206) {
+    drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
+  }
+
+  // Set variables for use  in sensis_query_page_alter
+  variable_set('sensis_query_location', $location);
+  variable_set('sensis_query_query', $query);
+  variable_set('sensis_query_result', $result);
 }
 
 /**
@@ -124,43 +149,60 @@ function sensis_query_form_submit($form, &$form_state) {
  *   Response from Sensis query.
  */
 function sensis_query_page_alter(&$page) {
-  $response = variable_get('sensis_query_response');
+  // These global variables store the most recent query variables and results
+  $location = variable_get('sensis_query_location');
+  $query = variable_get('sensis_query_query');
+  $result = variable_get('sensis_query_result');
 
-  if ($response != NULL) {
-    // Check HTTP response code
-    $responsecode = $response->getResponseCode();
-    if ($responsecode != 200) {
-      drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
-    }
-    else {
-      $page['content']['sensis_query_response'] = array(
-        '#weight' => 0,
-        '#markup' => t('Response OK'),
-      );
-    }
+  // Total results returned
+  $total = $result['totalResults'];
 
-    // Check API response; if OK, display results
-    $result = json_decode($response->getBody(), TRUE);
-    $code = $result["code"];
-    if ($code != 200 && $code != 206) {
-      drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
-    }
-    else {
-      // Print total results found
-      $page['content']['sensis_query_results'] = array(
-        '#weight' => 0,
-        '#markup' => t('Total results found: ' . $result['totalResults']),
-      );
+  $page['content']['title'] = array(
+    '#weight' => 0,
+    '#markup' => "<h3>Query results for <em>" . $query . "</em> in <em>" . $location . "</em></h3>",
+  );
+  $page['content']['sensis_results_list'][] = array(
+    '#weight' => 0,
+    '#markup' => '<p>Total results returned: ' . $total . '</p>',
+  );
+  $page['content']['sensis_results_list'][] = array(
+    '#weight' => 1,
+    '#markup' => '<table><tr><th>ID</th><th>Name</th><th>Address</th></tr>',
+  );
 
-      // Render results on a map.
-      // We'll want business name and address, latitude, and longitude.
+  // Results array containing result numbers and just the fields we need
+  $i = 0;
+  $brief_results = array();
+  foreach ($result['results'] as &$listing) {
+    $i++;
+    $brief_results['id'] = $i;
+    $brief_results['name'] = $listing['name'];
+    $brief_results['address'] = $listing['primaryAddress']['addressLine'];
+    $brief_results['suburb'] = $listing['primaryAddress']['suburb'];
+    $brief_results['state'] = $listing['primaryAddress']['state'];
+    $brief_results['postcode'] = $listing['primaryAddress']['postcode'];
+    $brief_results['latitude'] = $listing['primaryAddress']['latitude'];
+    $brief_results['longitude'] = $listing['primaryAddress']['longitude'];
 
-      // Render results in a list: Just business name and address.
-
-      // foreach ($result["results"] as &$listing) {
-        // echo $listing["name"] . " (" . $listing["primaryAddress"]["addressLine"] . ")\n";
-      // }
-    }
+    // Render results in a table, in order of relevance
+    $page['content']['sensis_results_list'][] = array(
+      '#weight' => $brief_results['id'] + 1,
+      '#markup' => '<tr><td>' . $brief_results['id'] . '</td><td>' .
+        $brief_results['name'] . '</td><td>' .
+        $brief_results['address'] . ', ' .
+        $brief_results['suburb'] . ' ' .
+        $brief_results['state'] . ' ' .
+        $brief_results['postcode'] . '</td></tr>',
+    );
   }
+
+  $page['content']['sensis_results_list'][] = array(
+    '#weight' => $total + 2,
+    '#markup' => '</table>',
+  );
+
+  // Render results on a map.
+  // We'll want business name and address, latitude, and longitude.
+
 }
 
