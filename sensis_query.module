@@ -63,20 +63,6 @@ function sensis_query_permission() {
 }
 
 /**
- * Implements hook_block_info().
- */
-function sensis_query_block_info() {
-  $blocks['sensis_query_results'] = array(
-    'info' => t('Results of Sensis query'),
-    'status' => TRUE,
-    'region' => 'content',
-    'visibility' => BLOCK_VISIBILITY_LISTED,
-    'pages' => 'sensis_query',
-  );
-  return $blocks;
-}
-
-/**
  * Implementation of form.
  */
 function sensis_query_form() {
@@ -104,12 +90,12 @@ function sensis_query_form_build($form, &$form_state) {
   $form['rows'] = array(
     '#type' => 'select',
     '#title' => 'Number of results to return',
+    '#description' => 'Default = 20',
     '#options' => array(
       10 => '10',
       20 => '20',
       50 => '50',
     ),
-    '#default_value' => 20,
   );
 
   $form['submit'] = array(
@@ -170,18 +156,17 @@ function sensis_query_form_submit($form, &$form_state) {
   variable_set('sensis_query_result', $result);
 }
 
-/*
- * Implementation of hook_block_view().
- */
-function sensis_query_block_view() {
-  $block = module_invoke('sensis_query', 'block_view', 'sensis_query_results');
-  print render($block);
-}
-
 /**
- * Implementation of hook_block_view_MODULE_DELTA_alter().
+ * Implementation of page alter.
+ *
+ * @param $response
+ *   Response from Sensis query.
+ *
+ * @todo
+ *   - results should only appear on query page: use block instead?
+ *   - pagination
  */
-function sensis_query_block_view_sensis_query_results_alter(&$data, $block) {
+function sensis_query_page_alter(&$page) {
   // These global variables store the most recent query variables and results
   $location = variable_get('sensis_query_location');
   $query = variable_get('sensis_query_query');
@@ -190,14 +175,15 @@ function sensis_query_block_view_sensis_query_results_alter(&$data, $block) {
   // Total results returned
   $total = $result['totalResults'];
 
-  // $data['subject'] = "<h3>Query results for <em>" . $query . "</em> in <em>" . $location . "</em></h3>";
-  $data['subject'] = 'Test';
-
-  $data['content']['sensis_results_list'][] = array(
+  $page['content']['title'] = array(
+    '#weight' => 0,
+    '#markup' => "<h3>Query results for <em>" . $query . "</em> in <em>" . $location . "</em></h3>",
+  );
+  $page['content']['sensis_results_list'][] = array(
     '#weight' => 0,
     '#markup' => '<p>Total results returned: ' . $total . '</p>',
   );
-  $data['content']['sensis_results_list'][] = array(
+  $page['content']['sensis_results_list'][] = array(
     '#weight' => 1,
     '#markup' => '<table><tr><th>ID</th><th>Name</th><th>Address</th></tr>',
   );
@@ -217,7 +203,7 @@ function sensis_query_block_view_sensis_query_results_alter(&$data, $block) {
     $brief_results['longitude'] = $listing['primaryAddress']['longitude'];
 
     // Render results in a table, in order of relevance
-    $data['content']['sensis_results_list'][] = array(
+    $page['content']['sensis_results_list'][] = array(
       '#weight' => $brief_results['id'] + 1,
       '#markup' => '<tr><td>' . $brief_results['id'] . '</td><td>' .
         $brief_results['name'] . '</td><td>' .
@@ -228,7 +214,7 @@ function sensis_query_block_view_sensis_query_results_alter(&$data, $block) {
     );
   }
 
-  $data['content']['sensis_results_list'][] = array(
+  $page['content']['sensis_results_list'][] = array(
     '#weight' => $total + 2,
     '#markup' => '</table>',
   );
