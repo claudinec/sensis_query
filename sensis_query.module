@@ -190,7 +190,7 @@ function sensis_query_display_results(&$page) {
   );
   $page['content']['sensis_results_list'][] = array(
     '#weight' => 1,
-    '#markup' => '<table><tr><th>ID</th><th>Name</th><th>Address</th></tr>',
+    '#markup' => '<table><tr><th>ID</th><th>Name</th><th>Address</th><th>Latitude</th><th>Longitude</th></tr>',
   );
 
   // Results array containing result numbers and just the fields we need
@@ -215,7 +215,9 @@ function sensis_query_display_results(&$page) {
         $brief_results['address'] . ', ' .
         $brief_results['suburb'] . ' ' .
         $brief_results['state'] . ' ' .
-        $brief_results['postcode'] . '</td></tr>',
+        $brief_results['postcode'] . '</td><td>' .
+        $brief_results['latitude'] . '</td><td>' .
+        $brief_results['longitude'] . '</td></tr>',
     );
   }
 
