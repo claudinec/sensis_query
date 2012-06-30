@@ -159,11 +159,17 @@ function sensis_query_form_submit($form, &$form_state) {
 
 /**
  * Implementation of page alter.
- *
- * @param $response
- *   Response from Sensis query.
  */
 function sensis_query_page_alter(&$page) {
+  if (current_path() == 'sensis_query') {
+    sensis_query_display_results($page);
+  }
+}
+
+/**
+ * Display results of query.
+ */
+function sensis_query_display_results(&$page) {
   // These global variables store the most recent query variables and results
   $location = variable_get('sensis_query_location');
   $query = variable_get('sensis_query_query');
