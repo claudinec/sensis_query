@@ -86,6 +86,18 @@ function sensis_query_form_build($form, &$form_state) {
     '#required' => TRUE,
   );
 
+  // Add a select list for number of results to show on each page
+  $form['rows'] = array(
+    '#type' => 'select',
+    '#title' => 'Number of results to return',
+    '#description' => 'Default = 20',
+    '#options' => array(
+      10 => '10',
+      20 => '20',
+      50 => '50',
+    ),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
@@ -112,14 +124,16 @@ function sensis_query_form_submit($form, &$form_state) {
   $apikey = variable_get('sensis_query_apikey');
   $query = $form_state['values']['query'];
   $location = $form_state['values']['location'];
+  $rows = $form_state['values']['rows'];
 
   // URL of the Sensis Search API endpoint
   $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
   // Construct a URL with the query string, escaping any special characters
   $query_url = $endpoint . "?key=" . $apikey . 
-      "&query=" . urlencode($query) . 
-      "&location=" . urlencode($location);
+      "&query=" . urlencode($query) .
+      "&location=" . urlencode($location) .
+      "&rows=" . urlencode($rows);
 
   // Call the endpoint
   $response = file_get_contents($query_url);
@@ -147,6 +161,10 @@ function sensis_query_form_submit($form, &$form_state) {
  *
  * @param $response
  *   Response from Sensis query.
+ *
+ * @todo
+ *   - results should only appear on query page: use block instead?
+ *   - pagination
  */
 function sensis_query_page_alter(&$page) {
   // These global variables store the most recent query variables and results
