@@ -180,10 +180,19 @@ function sensis_query_display_results(&$page) {
   // Total results returned
   $total = $result['totalResults'];
 
-  $page['content']['title'] = array(
-    '#weight' => 0,
-    '#markup' => '<h3>Displaying the first ' . $rows . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
-  );
+  if ($total > $rows) {
+    $page['content']['title'] = array(
+      '#weight' => 0,
+      '#markup' => '<h3>Displaying the first ' . $rows . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
+    );
+  }
+  else {
+    $page['content']['title'] = array(
+      '#weight' => 0,
+      '#markup' => '<h3>Displaying ' . $total . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
+    );
+  }
+
   $page['content']['sensis_results_list'][] = array(
     '#weight' => 0,
     '#markup' => '<p>Total results returned: ' . $total . '</p>',
