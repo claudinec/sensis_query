@@ -236,7 +236,6 @@ function sensis_query_display_results(&$page) {
       '#markup' => '</p>',
     );
   }
-  */
 
   // Render results on a map.
   // We'll want business name and address, latitude, and longitude.
