@@ -45,6 +45,7 @@ function sensis_query_menu() {
     'page arguments' => array('sensis_query_form_build'),
     'access arguments' => array('access sensis_query'),
     'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
   );
 
   return $items;
