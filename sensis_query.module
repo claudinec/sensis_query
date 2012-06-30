@@ -178,10 +178,6 @@ function sensis_query_display_results(&$page) {
 
   // Total results returned
   $total = $result['totalResults'];
-  
-  // Work out which page of results has been requested and display links to other pages
-  // @todo
-  // sensis_query_paginate();
 
   $page['content']['title'] = array(
     '#weight' => 0,
@@ -232,10 +228,3 @@ function sensis_query_display_results(&$page) {
 
 }
 
-/*
- * Work out which page of results has been requested and display links to other pages
- * @todo
- */
-function sensis_query_paginate() {
-  
-}
