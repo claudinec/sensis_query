@@ -163,7 +163,8 @@ function sensis_query_form_submit($form, &$form_state) {
  * Implementation of page alter.
  */
 function sensis_query_page_alter(&$page) {
-  if (current_path() == 'sensis_query') {
+  $query = variable_get('sensis_query_query');
+  if (current_path() == 'sensis_query' && isset($query)) {
     sensis_query_display_results($page);
   }
 }
@@ -252,5 +253,10 @@ function sensis_query_display_results(&$page) {
   // Render results on a map.
   // We'll want business name and address, latitude, and longitude.
 
+  // Unset query variables.
+  variable_del('sensis_query_location');
+  variable_del('sensis_query_query');
+  variable_del('sensis_query_result');
+  variable_del('sensis_query_rows');
 }
 
