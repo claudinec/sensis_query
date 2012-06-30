@@ -156,7 +156,6 @@ function sensis_query_form_submit($form, &$form_state) {
   variable_set('sensis_query_location', $location);
   variable_set('sensis_query_query', $query);
   variable_set('sensis_query_result', $result);
-  variable_set('sensis_query_rows', $rows);
 }
 
 /**
@@ -176,14 +175,17 @@ function sensis_query_display_results(&$page) {
   $location = variable_get('sensis_query_location');
   $query = variable_get('sensis_query_query');
   $result = variable_get('sensis_query_result');
-  $rows = variable_get('sensis_query_rows');
 
   // Total results returned
   $total = $result['totalResults'];
+  
+  // Work out which page of results has been requested and display links to other pages
+  // @todo
+  // sensis_query_paginate();
 
   $page['content']['title'] = array(
     '#weight' => 0,
-    '#markup' => '<h3>Displaying the first ' . $rows . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
+    '#markup' => "<h3>Query results for <em>" . $query . "</em> in <em>" . $location . "</em></h3>",
   );
   $page['content']['sensis_results_list'][] = array(
     '#weight' => 0,
@@ -225,32 +227,15 @@ function sensis_query_display_results(&$page) {
     '#markup' => '</table>',
   );
 
-  // Work out which page of results has been requested and display links to
-  // other pages
-  // @todo
-  /*
-  if ($total > $rows) {
-    $page['content']['sensis_results_pager'][] = array(
-      '#weight' => $total + 3,
-      '#markup' => '<p>',
-    );
-
-    $max_pages = ceil($total / $rows);
-    for ($i = 1; $i <= $max_pages; $i++) {
-      $page['content']['sensis_results_pager'][] = array(
-        '#weight' => $total + $i + 4,
-      );
-    }
-
-    $page['content']['sensis_results_pager'][] = array(
-      '#weight' => $total + $max_pages + 5,
-      '#markup' => '</p>',
-    );
-  }
-  */
-
   // Render results on a map.
   // We'll want business name and address, latitude, and longitude.
 
 }
 
+/*
+ * Work out which page of results has been requested and display links to other pages
+ * @todo
+ */
+function sensis_query_paginate() {
+  
+}
