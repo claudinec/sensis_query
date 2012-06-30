@@ -152,14 +152,14 @@ function sensis_query_form_submit($form, &$form_state) {
     drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
   }
 
-  // Set variables to be used in sensis_query_display_results()
+  // Set variables for use  in sensis_query_page_alter
   variable_set('sensis_query_location', $location);
   variable_set('sensis_query_query', $query);
   variable_set('sensis_query_result', $result);
 }
 
 /**
- * Implementation of hook_page_alter(): display Sensis query results if path is sensis_query.
+ * Implementation of page alter.
  */
 function sensis_query_page_alter(&$page) {
   if (current_path() == 'sensis_query') {
