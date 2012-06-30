@@ -3,15 +3,14 @@
  * @file
  * Query the Sensis API from within a Drupal node.
  *
- * 1. Provides a search for you to enter a query (eg. Cafe)
- *    and a location (eg. Melbourne)
+ * 1. Provides a search for you to enter a query (eg. Cafe) and a location (eg. Melbourne)
  * 2. Queries SAPI to get the results
- * 3. Renders the results on a map -- TODO
+ * 3. Renders the results on a map
  * 4. Renders the results in a basic list below the map
  */
 
 /**
- * Module configuration
+ * Module configuration.
  */
 function sensis_query_admin() {
   $form = array();
@@ -25,7 +24,7 @@ function sensis_query_admin() {
 }
 
 /**
- * Implements hook_menu()
+ * Implementation of menu.
  */
 function sensis_query_menu() {
   $items = array();
@@ -53,7 +52,7 @@ function sensis_query_menu() {
 }
 
 /**
- * Implements hook_permission()
+ * Implements hook_permission().
  */
 function sensis_query_permission() {
   return array(
@@ -65,14 +64,14 @@ function sensis_query_permission() {
 }
 
 /**
- * Implements hook_form()
+ * Implementation of form.
  */
 function sensis_query_form() {
   return drupal_get_form('sensis_query_form_build');
 }
 
 /**
- * Builds a form to construct a search query
+ * Build a form to construct a search query.
  */
 function sensis_query_form_build($form, &$form_state) {
   $form['query'] = array(
@@ -111,14 +110,17 @@ function sensis_query_form_build($form, &$form_state) {
 }
 
 /**
- * Sends the query to Sensis
+ * Send the query to Sensis.
  *
- * @param string $apikey
- *   Sensis Developer API key, entered in sensis_query_admin()
- * @param string $query
+ * @param $apikey
+ *   Your Sensis Developer API key, entered in sensis_query_admin().
+ * @param $query
  *   What to search for (eg business type or name)
- * @param string $location
- *   Location as text
+ * @param $location
+ *   Location as text: suburb/locality or state/territory.
+ *
+ * @return
+ *   Results from Sensis in JSON format.
  */
 function sensis_query_form_submit($form, &$form_state) {
   $apikey = variable_get('sensis_query_apikey');
@@ -129,7 +131,7 @@ function sensis_query_form_submit($form, &$form_state) {
   // URL of the Sensis Search API endpoint
   $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
-  // Construct a URL with the query string
+  // Construct a URL with the query string, escaping any special characters
   $query_url = $endpoint . "?key=" . $apikey . 
       "&query=" . urlencode($query) .
       "&location=" . urlencode($location) .
@@ -150,7 +152,7 @@ function sensis_query_form_submit($form, &$form_state) {
     drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
   }
 
-  // Set variables for use in sensis_query_page_alter
+  // Set variables for use  in sensis_query_page_alter
   variable_set('sensis_query_location', $location);
   variable_set('sensis_query_query', $query);
   variable_set('sensis_query_result', $result);
@@ -158,7 +160,7 @@ function sensis_query_form_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_page_alter()
+ * Implementation of page alter.
  */
 function sensis_query_page_alter(&$page) {
   $query = variable_get('sensis_query_query');
@@ -168,7 +170,7 @@ function sensis_query_page_alter(&$page) {
 }
 
 /**
- * Displays results of query
+ * Display results of query.
  */
 function sensis_query_display_results(&$page) {
   // These global variables store the most recent query variables and results
@@ -223,6 +225,16 @@ function sensis_query_display_results(&$page) {
     '#weight' => $total + 2,
     '#markup' => '</table>',
   );
+
+  // Work out which page of results has been requested and display links to
+  // other pages
+  // @todo
+  /*
+  if ($total > $rows) {
+    $page['content']['sensis_results_pager'][] = array(
+      '#weight' => $total + 3,
+      '#markup' => '<p>',
+    );
 
     $max_pages = ceil($total / $rows);
     for ($i = 1; $i <= $max_pages; $i++) {
