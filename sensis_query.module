@@ -8,10 +8,12 @@
  * 2. Queries SAPI to get the results
  * 3. Renders the results on a map
  * 4. Renders the results in a basic list below the map
+ *
+ * @todo Make this more Drupal-ish.
  */
 
 /**
- * Module configuration
+ * Module configuration.
  */
 function sensis_query_admin() {
   $form = array();
@@ -25,7 +27,7 @@ function sensis_query_admin() {
 }
 
 /**
- * Implements hook_menu()
+ * Implements hook_menu().
  */
 function sensis_query_menu() {
   $items = array();
@@ -53,7 +55,7 @@ function sensis_query_menu() {
 }
 
 /**
- * Implements hook_permission()
+ * Implements hook_permission().
  */
 function sensis_query_permission() {
   return array(
@@ -65,14 +67,14 @@ function sensis_query_permission() {
 }
 
 /**
- * Implements hook_form()
+ * Implements hook_form().
  */
 function sensis_query_form() {
   return drupal_get_form('sensis_query_form_build');
 }
 
 /**
- * Builds a form to construct a search query
+ * Builds a form to construct a search query.
  */
 function sensis_query_form_build($form, &$form_state) {
   $form['query'] = array(
@@ -112,7 +114,7 @@ function sensis_query_form_build($form, &$form_state) {
 }
 
 /**
- * Sends the query to Sensis
+ * Sends the query to Sensis.
  *
  * @param string $apikey
  *   Sensis Developer API key, entered in sensis_query_admin().
@@ -160,7 +162,7 @@ function sensis_query_form_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_page_alter()
+ * Implements hook_page_alter().
  */
 function sensis_query_page_alter(&$page) {
   $query = variable_get('sensis_query_query');
@@ -170,7 +172,7 @@ function sensis_query_page_alter(&$page) {
 }
 
 /**
- * Displays results of query
+ * Displays results of query.
  */
 function sensis_query_display_results(&$page) {
   // These global variables store the most recent query variables and results
