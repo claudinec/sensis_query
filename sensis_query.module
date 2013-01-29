@@ -91,7 +91,7 @@ function sensis_query_form_build($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  // Add a select list for number of results to show on each page
+  // Add a select list for number of results to show on each page.
   $form['rows'] = array(
     '#type' => 'select',
     '#title' => 'Number of results to return',
@@ -129,24 +129,24 @@ function sensis_query_form_submit($form, &$form_state) {
   $location = $form_state['values']['location'];
   $rows = $form_state['values']['rows'];
 
-  // URL of the Sensis Search API endpoint
+  // URL of the Sensis Search API endpoint.
   $endpoint = "http://api.sensis.com.au/ob-20110511/test/search";
 
-  // Construct a URL with the query string, escaping any special characters
+  // Construct a URL with the query string, escaping any special characters.
   $query_url = $endpoint . "?key=" . $apikey . 
       "&query=" . urlencode($query) .
       "&location=" . urlencode($location) .
       "&rows=" . urlencode($rows);
 
-  // Call the endpoint
+  // Call the endpoint.
   $response = file_get_contents($query_url);
 
-  // Check HTTP response code
+  // Check HTTP response code.
   if (!$response) {
     drupal_set_message(t('Sensis server returned error HTTP') . $responsecode);
   }
 
-  // Check API response
+  // Check API response.
   $result = json_decode($response, TRUE);
   $code = $result["code"];
   if ($code != 200 && $code != 206) {
@@ -154,7 +154,7 @@ function sensis_query_form_submit($form, &$form_state) {
       . $result["code"]);
   }
 
-  // Set variables for use  in sensis_query_page_alter
+  // Set variables for use in sensis_query_page_alter.
   variable_set('sensis_query_location', $location);
   variable_set('sensis_query_query', $query);
   variable_set('sensis_query_result', $result);
@@ -173,15 +173,19 @@ function sensis_query_page_alter(&$page) {
 
 /**
  * Displays results of query.
+ *
+ * @param $page
+ *
+ * @todo Do not display error if primaryAddress.addressLine not returned.
  */
 function sensis_query_display_results(&$page) {
-  // These global variables store the most recent query variables and results
+  // These global variables store the most recent query variables and results.
   $location = variable_get('sensis_query_location');
   $query = variable_get('sensis_query_query');
   $result = variable_get('sensis_query_result');
   $rows = variable_get('sensis_query_rows');
 
-  // Total results returned
+  // Total number of results returned.
   $total = $result['totalResults'];
 
   if ($total > $rows) {
@@ -208,21 +212,27 @@ function sensis_query_display_results(&$page) {
     '#markup' => '<table><tr><th>ID</th><th>Name</th><th>Address</th><th>Latitude</th><th>Longitude</th></tr>',
   );
 
-  // Results array containing result numbers and just the fields we need
+  // Results array containing result numbers and just the fields we need.
   $i = 0;
   $brief_results = array();
   foreach ($result['results'] as &$listing) {
     $i++;
     $brief_results['id'] = $i;
     $brief_results['name'] = $listing['name'];
-    $brief_results['address'] = $listing['primaryAddress']['addressLine'];
+    if ($listing['primaryAddress']['addressLine']) {
+      $brief_results['address'] = $listing['primaryAddress']['addressLine'];
+    }
+    else {
+      $brief_results['address'] = 'NO ADDRESS LISTED';
+    }
     $brief_results['suburb'] = $listing['primaryAddress']['suburb'];
     $brief_results['state'] = $listing['primaryAddress']['state'];
     $brief_results['postcode'] = $listing['primaryAddress']['postcode'];
     $brief_results['latitude'] = $listing['primaryAddress']['latitude'];
     $brief_results['longitude'] = $listing['primaryAddress']['longitude'];
 
-    // Render results in a table, in order of relevance
+    // Render results in a table, in order of relevance (default sort 
+    // from API).
     $page['content']['sensis_results_list'][] = array(
       '#weight' => $brief_results['id'] + 1,
       '#markup' => '<tr><td>' . $brief_results['id'] . '</td><td>' .
