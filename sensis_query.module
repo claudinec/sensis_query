@@ -84,7 +84,8 @@ function sensis_query_form_build($form, &$form_state) {
   $form['location'] = array(
     '#type' => 'textfield',
     '#title' => 'Location',
-    '#description' => 'Suburb or locality, postcode, latitude and longitude, or state or territory',
+    '#description' => 'Suburb or locality, postcode, latitude and longitude,
+      or state or territory',
     '#required' => TRUE,
   );
 
@@ -147,7 +148,8 @@ function sensis_query_form_submit($form, &$form_state) {
   $result = json_decode($response, TRUE);
   $code = $result["code"];
   if ($code != 200 && $code != 206) {
-    drupal_set_message(t('API returned error') . $result["message"] . ", code: " . $result["code"]);
+    drupal_set_message(t('API returned error') . $result["message"] . ", code: "
+      . $result["code"]);
   }
 
   // Set variables for use  in sensis_query_page_alter
@@ -183,13 +185,15 @@ function sensis_query_display_results(&$page) {
   if ($total > $rows) {
     $page['content']['title'] = array(
       '#weight' => 0,
-      '#markup' => '<h3>Displaying the first ' . $rows . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
+      '#markup' => '<h3>Displaying the first ' . $rows . ' results for <em>'
+        . $query . '</em> in <em>' . $location . '</em></h3>',
     );
   }
   else {
     $page['content']['title'] = array(
       '#weight' => 0,
-      '#markup' => '<h3>Displaying ' . $total . ' results for <em>' . $query . '</em> in <em>' . $location . '</em></h3>',
+      '#markup' => '<h3>Displaying ' . $total . ' results for <em>' . $query
+        . '</em> in <em>' . $location . '</em></h3>',
     );
   }
 
