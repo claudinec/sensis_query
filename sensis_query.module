@@ -9,6 +9,9 @@
  * 3. Renders the results on a map
  * 4. Renders the results in a basic list below the map
  *
+ * Ideas for making this more useful:
+ * - Integrate with a CRM?
+ *
  * @todo Make this more Drupal-ish.
  */
 
@@ -20,6 +23,8 @@ function sensis_query_admin() {
   $form['sensis_query_apikey'] = array(
     '#type' => 'textfield',
     '#title' => 'Sensis Developer API Key',
+    '#description' => 'Enter your API Key obtained from the
+      <a href="http://developers.sensis.com.au/member/register">Sensis Developer Centre</a>.',
     '#default_value' => variable_get('sensis_query_apikey'),
     '#required' => TRUE,
   );
