@@ -37,7 +37,7 @@ function sensis_query_admin() {
 function sensis_query_menu() {
   $items = array();
 
-  $items['admin/config/sensis_query'] = array(
+  $items['admin/config/services/sensis_query'] = array(
     'title' => 'Sensis query settings',
     'description' => 'Sensis query settings',
     'page callback' => 'drupal_get_form',

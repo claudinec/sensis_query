@@ -2,5 +2,5 @@ name = Sensis Query
 description = Query the Sensis API http://developers.sensis.com.au/
 core = 7.x
 version = 7.x-0.1
-configure = admin/config/sensis_query
+configure = admin/config/services/sensis_query
 
